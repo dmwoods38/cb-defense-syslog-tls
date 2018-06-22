@@ -2,7 +2,7 @@ import socket
 import ssl
 import sys
 import argparse
-import ConfigParser
+import configparser
 import requests
 from jinja2 import Template
 import os
@@ -14,30 +14,23 @@ import traceback
 import hashlib
 import fcntl
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-store_forwarder_dir = '/usr/share/cb/integrations/cb-defense-syslog/store/'
+store_forwarder_dir = '/vol/store/'
 policy_action_severity = 4
 
-
-from six import PY2
-
-if PY2:
-    get_unicode_string = unicode
-else:
-    get_unicode_string = str
+get_unicode_string = str
 
 
-def get_audit_logs(url, api_key_query, connector_id_query, ssl_verify,proxies=None):
+def get_audit_logs(url, api_key_query, connector_id_query, ssl_verify, proxies=None):
     headers = {'X-Auth-Token': "{0}/{1}".format(api_key_query, connector_id_query)}
     try:
         response = requests.get("{0}/integrationServices/v3/auditlogs".format(url),
                                 headers=headers,
-                                timeout=15,proxies=proxies)
+                                timeout=15, proxies=proxies)
 
         if response.status_code != 200:
             logger.error("Could not retrieve audit logs: {0}".format(response.status_code))
@@ -59,6 +52,7 @@ def get_audit_logs(url, api_key_query, connector_id_query, ssl_verify,proxies=No
         return False
 
     return notifications
+
 
 def parse_cb_defense_response_leef(response, source):
     # LEEF: 2.0 | Vendor | Product | Version | EventID | xa6 |
@@ -97,7 +91,7 @@ def parse_cb_defense_response_leef(response, source):
             url = note.get("url", "noUrlProvided")
             ruleName = note.get("ruleName", "noRuleName")
             kvpairs.update({"devTime": devTime, "devTimeFormat": devTimeFormat, "url": url, "ruleName": ruleName})
-            if note.get('type','noType') == 'THREAT' or note.get('threatInfo',False):
+            if note.get('type', 'noType') == 'THREAT' or note.get('threatInfo', False):
                 current_notification_leef_header += "|{0}|{1}|".format("THREAT", hex_sep)
                 cat = "THREAT"
                 indicators = note['threatInfo'].get('indicators', [])
@@ -113,15 +107,16 @@ def parse_cb_defense_response_leef(response, source):
                                 "resource": device_name, "email": email, "src": src, "identSrc": src, "dst": src,
                                 "identHostName": device_name, "summary": summary})
 
-            elif note.get('type',"noType") == 'POLICY_ACTION' or note.get("policyAction",False):
+            elif note.get('type', "noType") == 'POLICY_ACTION' or note.get("policyAction", False):
                 severity = 1
                 summary = get_unicode_string(note['policyAction'].get('summary', ''))
                 device_name = get_unicode_string(note['deviceInfo']['deviceName'])
                 email = get_unicode_string(note['deviceInfo']['email'])
                 src = get_unicode_string(note['deviceInfo'].get('internalIpAddress', "0.0.0.0"))
                 sha256 = get_unicode_string(note['policyAction']['sha256Hash'])
-                action = note.get('policyAction',{}).get('action',None)
-                current_notification_leef_header += "|" + (get_unicode_string(action) if action else "POLICY_ACTION") + "|" + hex_sep + "|"
+                action = note.get('policyAction', {}).get('action', None)
+                current_notification_leef_header += "|" + (
+                    get_unicode_string(action) if action else "POLICY_ACTION") + "|" + hex_sep + "|"
                 app_name = get_unicode_string(note['policyAction']['applicationName'])
                 reputation = get_unicode_string(note['policyAction'].get('reputation', ""))
                 url = get_unicode_string(note['url'])
@@ -147,13 +142,13 @@ def parse_cb_defense_response_leef(response, source):
     return log_messages
 
 
-def cb_defense_server_request(url, api_key, connector_id, ssl_verify,proxies=None):
+def cb_defense_server_request(url, api_key, connector_id, ssl_verify, proxies=None):
     logger.info("Attempting to connect to url: " + url)
 
     headers = {'X-Auth-Token': "{0}/{1}".format(api_key, connector_id)}
     try:
         response = requests.get(url + '/integrationServices/v3/notification', headers=headers, timeout=15,
-                                verify=ssl_verify,proxies=proxies)
+                                verify=ssl_verify, proxies=proxies)
         logger.info(response)
     except Exception as e:
         logging.error(e, exc_info=True)
@@ -169,7 +164,7 @@ def parse_config():
     """
     global config
     try:
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         config.readfp(open(args.config_file))
     except Exception as e:
         logging.error(e, exc_info=True)
@@ -180,7 +175,7 @@ def parse_config():
 
 def delete_store_notification(hash):
     try:
-        os.remove(store_forwarder_dir + hash)
+        os.remove(os.path.join(store_forwarder_dir, hash))
     except:
         logger.error(traceback.format_exc())
 
@@ -188,7 +183,7 @@ def delete_store_notification(hash):
 def send_store_notifications():
     logger.info("Number of files in store forward: {0}".format(len(os.listdir(store_forwarder_dir))))
     for file_name in os.listdir(store_forwarder_dir):
-        file_data = open(store_forwarder_dir + file_name, 'rb').read()
+        file_data = open(os.path.join(store_forwarder_dir, file_name), 'rb').read()
         file_data = file_data.decode("utf-8")
         #
         # Store notifications just in case sending fails
@@ -211,7 +206,7 @@ def store_notifications(data):
     hash = hashlib.sha256(byte_data).hexdigest()
 
     try:
-        with open(store_forwarder_dir + hash, 'wb') as f:
+        with open(os.path.join(store_forwarder_dir, hash), 'wb') as f:
             f.write(byte_data)
     except:
         logger.error(traceback.format_exc())
@@ -418,7 +413,6 @@ def verify_config_parse_servers():
         logger.error('Must specify JSON or CEF output format')
         logger.warn('Setting output format to CEF')
         config.set('general', 'output_format', 'cef')
-
 
     if not config.has_option('general', 'template'):
         logger.error('A template is required in the general stanza')
@@ -628,25 +622,22 @@ if __name__ == "__main__":
     parser.add_argument('--config-file', '-c', help="Absolute path to configuration file")
     parser.add_argument('--log-file', '-l', help="Log file location")
 
-    global args
-
     args = parser.parse_args()
     if not args.config_file:
         logger.error("a config file must be supplied")
         sys.exit(-1)
 
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+
     if args.log_file:
         file_handler = logging.FileHandler(args.log_file)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-    else:
-        syslog_handler = logging.handlers.SysLogHandler(address='/dev/log')
-        syslog_handler.setFormatter(formatter)
-
-        logger.addHandler(syslog_handler)
 
     try:
-        pid_file = '/usr/share/cb/integrations/cb-defense-syslog.pid'
+        pid_file = '/tmp/cb-defense-syslog.pid'
         fp = open(pid_file, 'w')
         try:
             fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
