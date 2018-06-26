@@ -11,47 +11,67 @@ The connector can be configured to use UDP, TCP, or encrypted (TCP over TLS) sys
 This connector is distributed as a binary RPM package compatible with any Red Hat or CentOS Linux distribution,
 CentOS/RHEL 6.x and above, running on a 64-bit Intel platform.
 
-## Installation
+## Docker Installation
+
+### Docker
+
+1. Install Docker
+
+2. Download the cb-defense-syslog-tls docker container
+
+
+	docker pull cbdevnetwork/defense-syslog:latest
+
+1. Create a directory that will store your configuration files.  Let's call it `./defense-vol`.
+
+
+	mkdir ./defense-vol
+	
+2. Copy the contents of the docker image configuration directory locally.
+
+
+	docker run --rm -v $(pwd)/defense-vol:/tmp defense-syslog:latest sh -c "cp -r /vol/* /tmp"
+
+	
+3. Modify `cb-defense-syslog.conf` file inside of `defense-vol` directory
+
+4. Run the container with `defense-vol` directory bind mounted to `/vol` from within the container.
+
+
+	docker run -d -v $(pwd)/defense-vol:/vol defense-syslog:latest
+	
+	
+## RPM Installation
 
 1. Install the software. As root on your Carbon Black or other RPM based 64-bit Linux distribution server:
 
-    ```
+
     cd /etc/yum.repos.d
-    ```
-    ```
     curl -O https://opensource.carbonblack.com/release/x86_64/CbOpenSource.repo
-    ```
-    ```
     yum install python-cb-defense-syslog
-    ```
 
 
 3. Copy the example config file:
 
-    ```
+
     cd /etc/cb/integrations/cb-defense-syslog
-    ```
-    ```
     cp cb-defense-syslog.conf.example cb-defense-syslog.conf
-    ```
 
 4. Modify the config file `/etc/cb/integrations/cb-defense-syslog/cb-defense-syslog.conf` as needed
 
 5. Test the new connector. As root, execute:
 
-    ```
+
     /usr/share/cb/integrations/cb-defense-syslog/cb-defense-syslog --config-file /etc/cb/integrations/cb-defense-syslog/cb-defense-syslog.conf --log-file /var/log/cb/integrations/cb-defense-syslog/cb-defense-syslog.log
-    ```
+
     
-    Then:
+Then:
     
-    ```
+
     cat /var/log/cb/integrations/cb-defense-syslog/cb-defense-syslog.log
-    ```
- 
-    A successful run will look like:
-   
-    ```
+    
+A successful run will look like:
+
     2017-06-27 09:24:10,747 - __main__ - INFO - Found 1 Cb Defense Servers in config file
     2017-06-27 09:24:10,748 - __main__ - INFO - Handling notifications for https://api-eap01.conferdeploy.net
     2017-06-27 09:24:10,748 - __main__ - INFO - Attempting to connect to url: https://api-eap01.conferdeploy.net
@@ -61,7 +81,7 @@ CentOS/RHEL 6.x and above, running on a 64-bit Intel platform.
     2017-06-27 09:24:10,888 - __main__ - INFO - <Response [200]>
     2017-06-27 09:24:10,889 - __main__ - INFO - successfully connected, no alerts at this time
     2017-06-27 09:24:10,889 - __main__ - INFO - There are no messages to forward to host
-    ```
+
     
 6. Start the connector by enabling it in `cron`. Uncomment the Cb Defense Connector (remove the beginning `#` from the last line) in `/etc/cron.d/cb-defense-syslog`.
    By default, the connector will run once per hour.

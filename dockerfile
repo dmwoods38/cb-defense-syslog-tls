@@ -7,7 +7,7 @@ COPY cb_defense_syslog.py /
 COPY root/etc/cb/integrations/cb-defense-syslog/cb-defense-syslog.conf.example /vol/cb-defense-syslog.conf
 
 # Add crontab file in the cron directory
-COPY vol/crontab /etc/cron.d/cb-defense-syslog
+COPY ./crontab /etc/cron.d/cb-defense-syslog
 
 # Give execution rights on the cron job
 RUN chmod 0644 /etc/cron.d/cb-defense-syslog
