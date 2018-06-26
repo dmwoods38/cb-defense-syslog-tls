@@ -21,11 +21,13 @@ CentOS/RHEL 6.x and above, running on a 64-bit Intel platform.
 
 
 	docker pull cbdevnetwork/defense-syslog:latest
+	
 
 1. Create a directory that will store your configuration files.  Let's call it `./defense-vol`.
 
 
 	mkdir ./defense-vol
+	
 	
 2. Copy the contents of the docker image configuration directory locally.
 
