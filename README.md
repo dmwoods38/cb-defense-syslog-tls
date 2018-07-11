@@ -32,7 +32,7 @@ CentOS/RHEL 6.x and above, running on a 64-bit Intel platform.
 2. Copy the contents of the docker image configuration directory locally.
 
 	```
-	docker run --rm -v $(pwd)/defense-vol:/tmp defense-syslog:latest sh -c "cp -r /vol/* /tmp"
+	docker run --rm -v $(pwd)/defense-vol:/tmp cbdevnetwork/defense-syslog:latest sh -c "cp -r /vol/* /tmp"
 	```
 	
 3. Modify `cb-defense-syslog.conf` file inside of `defense-vol` directory
