@@ -75,5 +75,6 @@ chmod +x /usr/share/cb/integrations/cb-defense-syslog/cb-defense-syslog
 
 echo 'Everything should be in place now, just change the config as needed.'
 echo 'Config is located here /etc/cb/integrations/cb-defense-syslog/cb-defense-syslog.conf'
-echo 'The CB Defense forwarder is configured to run every hour by default.'
+echo 'The CB Defense forwarder is disabled by default.'
 echo 'If you want to change this the crontab is located here /etc/cron.d/cb-defense-syslog'
+echo 'There is a line that is commented out that will enable the forwarder to run hourly.'
