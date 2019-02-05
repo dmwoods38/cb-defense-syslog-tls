@@ -1,3 +1,7 @@
+# READ FIRST
+
+This fork was made to add support for debian-based systems, it just has a shell script that pulls the necessary dependencies and creates the appropriate paths. The CB Defense team has recently created a Dockerfile so you can install the connector on non RHEL-based systems, I recommend using that instead.
+
 # Cb Defense Syslog TLS Connector
 
 This connector allows you to forward alert notifications from your Cb Defense cloud instance into local, on-premise
